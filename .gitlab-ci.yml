@@ -1,0 +1,632 @@
+variables:
+  GIT_STRATEGY: clone
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SSL_NO_VERIFY: "1"
+  GIT_CREDENTIALS: "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.eng.renesas.com"
+
+stages:
+  - coding-check
+  - build
+  - test
+  - verify
+
+check-compliance:
+  stage: coding-check
+  tags:
+    - RA_build
+  before_script:
+    # git credential config
+    - git config --global credential.helper store
+    - echo $GIT_CREDENTIALS > ~/.git-credentials
+    # init zephyr workspace
+    - if [[ ! -d "$CI_PROJECT_DIR/../.west" ]]; then
+      west init -l $CI_PROJECT_DIR;
+      fi
+    # update west module
+    - west config fetch.parallel 4
+    - west update
+  script:
+    # get BASE_HEAD
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - BASE_HEAD=$(git rev-parse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME)
+    - echo $BASE_HEAD
+    # run compliance check with BASE_HEAD diff
+    - python3 $CI_PROJECT_DIR/scripts/ci/check_compliance.py --annotate -e KconfigBasic -e YAMLLint -c ${BASE_HEAD}..
+    # check-warns - Refer from .github/workflows/compliance.yml
+    - if [[ ! -s "compliance.xml" ]]; then
+      check=1;
+      else
+      check=0;
+      cat compliance.xml;
+      fi
+    - test $check -eq 0
+    - files=`python3 scripts/ci/check_compliance.py -l`
+    - for file in "${files[@]}"; do
+      f="${file}.txt";
+      if [[ -s $f ]]; then
+      check=1;
+      cat $f;
+      rm $f;
+      fi
+      done
+    - test $check -eq 0
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  allow_failure: true
+
+verify_job:
+  stage: verify
+  script:
+    - if [ -n "$(grep 'failed' <<< $(gitlab-ci-status))" ]; then
+      echo "One or more jobs failed.";
+      exit 1;
+      else
+      echo "All jobs succeeded.";
+      fi
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+# ek_ra8m1 build
+build-ek_ra8m1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra8m1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra8d1 build
+build-ek_ra8d1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra8d1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# mck_ra8t1 build
+build-mck_ra8t1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: mck_ra8t1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra6m5 build
+build-ek_ra6m5:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra6m5
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra6m4 build
+build-ek_ra6m4:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra6m4
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra6m3 build
+build-ek_ra6m3:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra6m3
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra6m2 build
+build-ek_ra6m2:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra6m2
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra6m1 build
+build-ek_ra6m1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra6m1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra6e2 build
+build-ek_ra6e2:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra6e2
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra4w1 build
+build-ek_ra4w1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra4w1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra4m1 build
+build-ek_ra4m1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra4m1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra4m3 build
+build-ek_ra4m3:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra4m3
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra4m2 build
+build-ek_ra4m2:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra4m2
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# fpb_ra4e1 build
+build-fpb_ra4e1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: fpb_ra4e1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# voice_ra4e1 build
+build-voice_ra4e1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: voice_ra4e1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra4e2 build
+build-ek_ra4e2:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra4e2
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra2a1 build
+build-ek_ra2a1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra2a1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# ek_ra2l1 build
+build-ek_ra2l1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra2l1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# fpb_ra6e1 build
+build-fpb_ra6e1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: fpb_ra6e1
+    ADDITIONAL_SUPPORTED:
+    ADDITIONAL_TAGS:
+
+# fpb_ra6e2 build
+build-fpb_ra6e2:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: fpb_ra6e2
+
+# ek_ra4l1 build
+build-ek_ra4l1:
+  stage: build
+  extends: .build-job
+  variables:
+    BOARD: ek_ra4l1
+
+# ek_ra8m1 test
+test-ek_ra8m1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra8m1
+  tags:
+    - hcmzephyr-rpi009
+  variables:
+    BOARD: ek_ra8m1
+    SN: "1087319035"
+    COM: "/dev/tty_ek_ra8m1_1"
+    FIXTURES:
+
+# ek_ra8d1 test
+test-ek_ra8d1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra8d1
+  tags:
+    - hcmzephyr-rpi016
+  variables:
+    BOARD: ek_ra8d1
+    SN: "1088026934"
+    COM: "/dev/tty_ek_ra8d1_1"
+    FIXTURES:
+
+# mck_ra8t1 test
+test-mck_ra8t1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-mck_ra8t1
+  tags:
+    - hcmzephyr-rpi013
+  variables:
+    BOARD: mck_ra8t1
+    SN: "1085186104"
+    COM: "/dev/tty_mck_ra8t1"
+    FIXTURES:
+
+# ek_ra4l1 test
+test-ek_ra4l1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra4l1
+  tags:
+    - hcmzephyr-rpi004
+  variables:
+    BOARD: ek_ra4l1
+    SN: "1088247357"
+    COM: "/dev/tty_ek_ra4l1"
+    FIXTURES:
+
+# ek_ra2a1 test
+test-ek_ra2a1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra2a1
+  tags:
+    - hcmzephyr-rpi010
+  variables:
+    BOARD: ek_ra2a1
+    SN: "831515167"
+    COM: "/dev/tty_ek_ra2a1"
+
+# ek_ra2l1 test
+test-ek_ra2l1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra2l1
+  tags:
+    - hcmzephyr-rpi012
+  variables:
+    BOARD: ek_ra2l1
+    SN: "831728263"
+    COM: "/dev/tty_ek_ra2l1"
+
+# ek_ra4e2 test
+test-ek_ra4e2:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra4e2
+  tags:
+    - hcmzephyr-rpi009
+  variables:
+    BOARD: ek_ra4e2
+    SN: "1083673102"
+    COM: "/dev/tty_ek_ra4e2"
+
+# ek_ra4m1 test
+test-ek_ra4m1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra4m1
+  tags:
+    - hcmzephyr-rpi010
+  variables:
+    BOARD: ek_ra4m1
+    SN: "831049118"
+    COM: "/dev/tty_ek_ra4m1"
+
+# ek_ra4m2 test
+test-ek_ra4m2:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra4m2
+  tags:
+    - hcmzephyr-rpi006
+  variables:
+    BOARD: ek_ra4m2
+    SN: "831029429"
+    COM: "/dev/tty_ek_ra4m2"
+
+# ek_ra4m3 test
+test-ek_ra4m3:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra4m3
+  tags:
+    - hcmzephyr-rpi006
+  variables:
+    BOARD: ek_ra4m3
+    SN: "831086041"
+    COM: "/dev/tty_ek_ra4m3"
+
+# ek_ra4w1 test
+test-ek_ra4w1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra4w1
+  tags:
+    - hcmzephyr-rpi014
+  variables:
+    BOARD: ek_ra4w1
+    SN: "831708482"
+    COM: "/dev/tty_ek_ra4w1"
+
+# ek_ra6e2 test
+test-ek_ra6e2:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra6e2
+  tags:
+    - hcmzephyr-rpi012
+  variables:
+    BOARD: ek_ra6e2
+    SN: "1087598252"
+    COM: "/dev/tty_ek_ra6e2"
+
+# ek_ra6m1 test
+test-ek_ra6m1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra6m1
+  tags:
+    - hcmzephyr-rpi011
+  variables:
+    BOARD: ek_ra6m1
+    SN: "831463024"
+    COM: "/dev/tty_ek_ra6m1"
+
+# ek_ra6m2 test
+test-ek_ra6m2:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra6m2
+  tags:
+    - hcmzephyr-rpi011
+  variables:
+    BOARD: ek_ra6m2
+    SN: "831696098"
+    COM: "/dev/tty_ek_ra6m2"
+
+# ek_ra6m3 test
+test-ek_ra6m3:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra6m3
+  tags:
+    - hcmzephyr-rpi005
+  variables:
+    BOARD: ek_ra6m3
+    SN: "831808587"
+    COM: "/dev/tty_ek_ra6m3"
+
+# ek_ra6m4 test
+test-ek_ra6m4:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra6m4
+  tags:
+    - hcmzephyr-rpi005
+  variables:
+    BOARD: ek_ra6m4
+    SN: "831015308"
+    COM: "/dev/tty_ek_ra6m4"
+
+# ek_ra6m5 test
+test-ek_ra6m5:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-ek_ra6m5
+  tags:
+    - hcmzephyr-rpi016
+  variables:
+    BOARD: ek_ra6m5
+    SN: "831110439"
+    COM: "/dev/tty_ek_ra6m5"
+
+# fpb_ra4e1 test
+test-fpb_ra4e1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-fpb_ra4e1
+  tags:
+    - hcmzephyr-rpi001
+  variables:
+    BOARD: fpb_ra4e1
+    SN: "831571425"
+    COM: "/dev/tty_fpb_ra4e1"
+
+# fpb_ra6e1 test
+test-fpb_ra6e1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-fpb_ra6e1
+  tags:
+    - hcmzephyr-rpi001
+  variables:
+    BOARD: fpb_ra6e1
+    SN: "831189493"
+    COM: "/dev/tty_fpb_ra6e1"
+
+# fpb_ra6e2 test
+test-fpb_ra6e2:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-fpb_ra6e2
+  tags:
+    - hcmzephyr-rpi014
+  variables:
+    BOARD: fpb_ra6e2
+    SN: "1083435088"
+    COM: "/dev/tty_fpb_ra6e2"
+
+# voice_ra4e1 test
+test-voice_ra4e1:
+  stage: test
+  extends: .test-job
+  needs:
+    - job: build-voice_ra4e1
+  tags:
+    - hcmzephyr-rpi014
+  variables:
+    BOARD: voice_ra4e1
+    SN: "1081551358"
+    COM: "/dev/tty_voice_ra4e1"
+
+# default build job
+.build-job:
+  variables:
+    GIT_DEPTH: 1
+  tags:
+    - RA_build
+  before_script:
+    # git credential config
+    - git config --global credential.helper store
+    - echo $GIT_CREDENTIALS > ~/.git-credentials
+    # init zephyr workspace
+    - if [[ ! -d "$CI_PROJECT_DIR/../.west" ]]; then
+      west init -l $CI_PROJECT_DIR;
+      fi
+    # update west module
+    - west config fetch.parallel 4
+    - west update --narrow
+    # add additional supported test in board metadata
+    - if [ -n "$ADDITIONAL_SUPPORTED" ]; then
+      IFS=' ' read -r -a members <<< $ADDITIONAL_SUPPORTED;
+      for member in "${members[@]}"; do
+      sed -i "/supported:/a\  - $member" "boards/renesas/$BOARD/$BOARD.yaml";
+      done
+      fi
+    - cat boards/renesas/$BOARD/$BOARD.yaml
+  script:
+    - TAGS="-t drivers"
+    - if [ -n "$ADDITIONAL_TAGS" ]; then
+      IFS=' ' read -r -a tags <<< $ADDITIONAL_TAGS;
+      for tag in "${tags[@]}"; do
+      TAGS+=" -t $tag";
+      done
+      fi
+    - TWISTER_BUILD_CMD="west twister --prep-artifacts-for-testing --outdir $CI_PROJECT_DIR/twister_out -p $BOARD $TAGS"
+    - echo $TWISTER_BUILD_CMD
+    - $TWISTER_BUILD_CMD
+  artifacts:
+    paths:
+      - "$CI_PROJECT_DIR/twister_out"
+    when: always
+    expire_in: 10 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+# default test job
+.test-job:
+  variables:
+    ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-${ZEPHYR_SDK_VERSION}
+    SEGGER_JLINK_INSTALL_DIR: /opt/JLink
+    GIT_DEPTH: 1
+  before_script:
+    # install the minimal required dependencies:
+    - sudo apt install --no-install-recommends git cmake ninja-build wget python3 python3-pip;
+      cmake --version;
+      python3 --version;
+    # install ZephyrSDK
+    - ZEPHYR_SDK_VERSION=$(cat $CI_PROJECT_DIR/SDK_VERSION)
+    - if [ ! -d "$ZEPHYR_SDK_INSTALL_DIR" ]; then
+      wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-aarch64_minimal.tar.xz;
+      tar xvf zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-aarch64_minimal.tar.xz;
+      sudo mv zephyr-sdk-${ZEPHYR_SDK_VERSION} $ZEPHYR_SDK_INSTALL_DIR;
+      $ZEPHYR_SDK_INSTALL_DIR/setup.sh -t arm-zephyr-eabi -h -c;
+      fi
+    # install west
+    - pip install west --break-system-packages
+    # init zephyrworkspace
+    - if [[ ! -d "$CI_PROJECT_DIR/../.west" ]]; then
+      west init -l $CI_PROJECT_DIR;
+      fi
+    - source $CI_PROJECT_DIR/zephyr-env.sh
+    - west zephyr-export
+    # install additional Python dependencies
+    - pip install -r $CI_PROJECT_DIR/scripts/requirements.txt --break-system-packages
+    # install Segger JLink
+    - if [ ! -d "$SEGGER_JLINK_INSTALL_DIR" ]; then
+      wget --post-data 'accept_license_agreement=accepted&non_emb_ctr=confirmed&submit=Download+software' https://www.segger.com/downloads/jlink/JLink_Linux_arm64.tgz;
+      tar xvf JLink_Linux_arm64.tgz;
+      sudo mv JLink_Linux_*_arm64 $SEGGER_JLINK_INSTALL_DIR; sudo chmod a-w $SEGGER_JLINK_INSTALL_DIR;
+      sudo cp $SEGGER_JLINK_INSTALL_DIR/99-jlink.rules /etc/udev/rules.d/;
+      sudo udevadm control --reload-rules && sudo udevadm trigger;
+      fi
+  script:
+    - echo "Running tests for $BOARD"
+    - export PATH="/home/pi/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games:/home/pi/.local/bin:/home/pi/.local/bin:$SEGGER_JLINK_INSTALL_DIR"
+    - if [ -n "$FIXTURES" ]; then
+      IFS=' ' read -r -a harnesses <<< $FIXTURES;
+      for harness in "${harnesses[@]}"; do
+      HARNESSES+=" --fixture $harness";
+      done
+      fi
+    - TWISTER_TEST_CMD="west twister --device-testing --outdir $CI_PROJECT_DIR/twister_out --test-only --west-flash="--skip-rebuild,--dev-id=$SN" -p $BOARD $HARNESSES --device-serial $COM --device-flash-timeout 60 --log-level=DEBUG"
+    - echo $TWISTER_TEST_CMD
+    - $TWISTER_TEST_CMD
+  after_script:
+    - cat $CI_PROJECT_DIR/twister_out/twister.log
+  artifacts:
+    paths:
+      - "$CI_PROJECT_DIR/twister_out/**/*.log"
+    when: always
+    expire_in: 10 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
