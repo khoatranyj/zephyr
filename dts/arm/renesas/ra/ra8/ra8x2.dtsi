@@ -1040,6 +1040,15 @@
 			status = "disabled";
 		};
 
+		rtc: rtc@40202000 {
+			compatible = "renesas,ra-rtc";
+			reg = <0x40202000 0x80>;
+			clocks = <&subclk>;
+			error-adjustment-period = "per-ten-seconds";
+			alarms-count = <1>;
+			status = "okay";
+		};
+
 		option_setting_ofs_conf_sec: option-setting-ofs-conf-sec@2c9f040 {
 			compatible = "zephyr,memory-region";
 			reg = <0x02c9f040 0x3c0>;
