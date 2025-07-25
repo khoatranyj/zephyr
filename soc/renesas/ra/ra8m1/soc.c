@@ -25,6 +25,8 @@ uint32_t SystemCoreClock BSP_SECTION_EARLY_INIT;
 
 volatile uint32_t g_protect_pfswe_counter BSP_SECTION_EARLY_INIT;
 
+extern void cold_start_init(void);
+
 #ifdef CONFIG_RUNTIME_NMI
 extern bsp_grp_irq_cb_t g_bsp_group_irq_sources[];
 extern void NMI_Handler(void);
@@ -47,4 +49,6 @@ void soc_early_init_hook(void)
 
 	z_arm_nmi_set_handler(NMI_Handler);
 #endif /* CONFIG_RUNTIME_NMI */
+
+	cold_start_init();
 }
