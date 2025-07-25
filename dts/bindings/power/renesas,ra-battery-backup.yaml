@@ -1,0 +1,32 @@
+description: Renesas RA battery backup domain
+
+compatible: "renesas,ra-battery-backup"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+
+  reg-names:
+    required: true
+
+  switch-threshold:
+    type: int
+    enum: [0, 1, 2, 3, 4, 5, 6]
+    description: |
+      VBATT detection threshold (VDETLVL):
+        0 = 2.80V
+        1 = 2.53V
+        2 = 2.10V
+        3 = 1.95V
+        4 = 1.85V
+        5 = 1.75V
+        6 = Not used
+
+  manual-configure:
+    type: boolean
+    description: |
+      Battery backup need to configure to use.
+      For those do not have this property, hardware
+      is automatically switch.
