@@ -56,6 +56,15 @@ struct rtc_renesas_ra_data {
 #endif /* CONFIG_RTC_UPDATE */
 };
 
+#define RSTSR0_PORF_BIT_IS_SET BIT(0)
+#define VBTBPSR_VBPORF_IS_SET  BIT(0)
+
+#ifdef CONFIG_RENESAS_RA_BATTERY_BACKUP_MANUAL_CONFIGURE
+extern volatile uint8_t vbtbpsr_state_at_boot;
+#else
+extern volatile uint8_t rstsr0_state_at_boot;
+#endif /* CONFIG_RENESAS_RA_BATTERY_BACKUP_MANUAL_CONFIGURE */
+
 /* FSP ISR */
 extern void rtc_alarm_periodic_isr(void);
 extern void rtc_carry_isr(void);
@@ -151,9 +160,15 @@ static int rtc_renesas_ra_init(const struct device *dev)
 		return -EIO;
 	}
 
-	if (R_SYSTEM->RSTSR0_b.PORF == 1) {
+#if defined(CONFIG_RENESAS_RA_BATTERY_BACKUP_MANUAL_CONFIGURE)
+	if (vbtbpsr_state_at_boot & VBTBPSR_VBPORF_IS_SET) {
 		R_RTC_ClockSourceSet(&data->fsp_ctrl);
 	}
+#else
+	if (rstsr0_state_at_boot & RSTSR0_PORF_BIT_IS_SET) {
+		R_RTC_ClockSourceSet(&data->fsp_ctrl);
+	}
+#endif /* CONFIG_RENESAS_RA_BATTERY_BACKUP_MANUAL_CONFIGURE */
 
 #ifdef CONFIG_RTC_UPDATE
 	fsp_err = R_RTC_PeriodicIrqRateSet(&data->fsp_ctrl, RTC_PERIODIC_IRQ_SELECT_1_SECOND);
